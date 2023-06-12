@@ -6,7 +6,6 @@
 - 有一些函数对应的变体未在列表中提及，因为相关函数在概念上相似，只是在某些细节上有所不同。由于命名一致，通常可以举一反三。
 - 除了基本效果类型 `ZIO[R, E, A]` 之外，其他的 ZIO
   类型都被省略了。例如：`ZStream[R, E, A]`, `ZLayer[RIn, E, ROut]`, `Fiber[E, A]` 和 `Ref[A]`。
-- In the remainder of this cheat sheet, `E1 >: E`, but `E2` can be any error type. Also `A1 >: A`.
 - 在该表中，`E1` 代表 `E` 的派生，但 `E2` 可以是任何错误类型。同样适用于 `A` 和 `A1`。
 
 ## 别名
