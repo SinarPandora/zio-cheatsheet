@@ -28,7 +28,7 @@
 | ZIO.die                | `Throwable`                                                                            | `IO[Nothing, Nothing]`            | 程序以该错误失败，视为 defect，可以打断协程                           |
 | ZIO.attempt            | `=> A`                                                                                 | `IO[Throwable, A]`                | 执行代码块，捕获代码块的异常，并在成功时返回对应值，<br />一般用于将外部作用包装为 ZIO 作用 |
 | ZIO.async              | `((IO[E, A] => Unit) => Unit)` <br> FiberId                                            | `IO[E, A]`                        | 将异步回调式的 API 转换为 ZIO 作用                              |
-| ZIO.fromEither         | `Either[E, A]`                                                                         | `IO[E, A]`                        | 将 Either[E, A] 转换为 ZIO 作用                           |
+| ZIO.fromEither         | `Either[E, A]`                                                                         | `IO[E, A]`                        | 将 Either[E, A] 转换为 ZIO 作用                           |
 | ZIO.left               | `A`                                                                                    | `IO[Nothing, Either[A, Nothing]]` | 上面的左值变体                                             |
 | ZIO.right              | `B`                                                                                    | `IO[Nothing, Either[Nothing, B]]` | 上面的右值变体                                             |
 | ZIO.fromFiber          | `Fiber[E, A]`                                                                          | `IO[E, A]`                        | 创建一个返回传入协程结果的作用                                     |
@@ -95,84 +95,84 @@
 
 ## 从错误中恢复
 
-| Name          | From       | Given                                         | To                          |
-|---------------|------------|-----------------------------------------------|-----------------------------|
-| either        | `IO[E, A]` |                                               | `IO[Nothing, Either[E, A]]` |
-| option        | `IO[E, A]` |                                               | `IO[Nothing, Option[A]]`    |
-| ignore        | `IO[E, A]` |                                               | `IO[Nothing, Unit]`         |
-| exit          | `IO[E, A]` |                                               | `IO[Nothing, Exit[E, A]]`   |
-| `<>` (orElse) | `IO[E, A]` | `IO[E2, A1]`                                  | `IO[E2, A1]`                |
-| orElseEither  | `IO[E, A]` | `IO[E2, B]`                                   | `IO[E2, Either[A, B]]`      |
-| fold          | `IO[E, A]` | `E => B` <br> `A => B`                        | `IO[Nothing, B]`            |
-| foldZIO       | `IO[E, A]` | `E => IO[E2, B]` <br> `A => IO[E2, B]`        | `IO[E2, B]`                 |
-| foldCauseZIO  | `IO[E, A]` | `Cause[E] => IO[E2, B]` <br> `A => IO[E2, B]` | `IO[E2, B]`                 |
-| catchAll      | `IO[E, A]` | `E => IO[E2, A1]`                             | `IO[E2, A1]`                |
-| catchAllCause | `IO[E, A]` | `Cause[E] => IO[E2, A1]`                      | `IO[E2, A1]`                |
-| catchSome     | `IO[E, A]` | `PartialFunction[E, IO[E1, A1]]`              | `IO[E1, A1]`                |
-| retry         | `IO[E, A]` | `Schedule[E, S]`                              | `IO[E, A]`                  |
-| eventually    | `IO[E, A]` |                                               | `IO[Nothing, A]`            |
+| 函数名           | 从          | 参数                                            | 转换到                         | 含义                                           |
+|---------------|------------|-----------------------------------------------|-----------------------------|----------------------------------------------|
+| either        | `IO[E, A]` |                                               | `IO[Nothing, Either[E, A]]` | 将错误和值包装到 Either                              |
+| option        | `IO[E, A]` |                                               | `IO[Nothing, Option[A]]`    | 将结果包装为 Some[A]，错误视为 None                     |
+| ignore        | `IO[E, A]` |                                               | `IO[Nothing, Unit]`         | 忽略结果和错误，都转换为 Unit                            |
+| exit          | `IO[E, A]` |                                               | `IO[Nothing, Exit[E, A]]`   | 将错误转换为程序的退出值                                 |
+| `<>` (orElse) | `IO[E, A]` | `IO[E2, A1]`                                  | `IO[E2, A1]`                | 在出错时替换为传入的作用                                 |
+| orElseEither  | `IO[E, A]` | `IO[E2, B]`                                   | `IO[E2, Either[A, B]]`      | 在出错时，计算传入的作用，成功则返回 Right[B]，原作用成功则返回 Left[A] |
+| fold          | `IO[E, A]` | `E => B` <br> `A => B`                        | `IO[Nothing, B]`            | 将值和错误都转换为统一类型 B                              |
+| foldZIO       | `IO[E, A]` | `E => IO[E2, B]` <br> `A => IO[E2, B]`        | `IO[E2, B]`                 | 将值和错误都转换为新作用                                 |
+| foldCauseZIO  | `IO[E, A]` | `Cause[E] => IO[E2, B]` <br> `A => IO[E2, B]` | `IO[E2, B]`                 | 将值和错误的原因都转换为新作用                              |
+| catchAll      | `IO[E, A]` | `E => IO[E2, A1]`                             | `IO[E2, A1]`                | 捕获错误并转换为新作用                                  |
+| catchAllCause | `IO[E, A]` | `Cause[E] => IO[E2, A1]`                      | `IO[E2, A1]`                | 捕获错误原因并转换为新作用                                |
+| catchSome     | `IO[E, A]` | `PartialFunction[E, IO[E1, A1]]`              | `IO[E1, A1]`                | 对错误进行模式匹配，从而只处理指定类型的错误                       |
+| retry         | `IO[E, A]` | `Schedule[E, S]`                              | `IO[E, A]`                  | 对错误进行重试                                      |
+| eventually    | `IO[E, A]` |                                               | `IO[Nothing, A]`            | 忽略错误并重试该作用直到作用成功                             |
 
-## Terminate fiber with errors
+## 用错误结束协程
 
-| Name            | From               | Given                                          | To               |
-|-----------------|--------------------|------------------------------------------------|------------------|
-| orDie           | `IO[Throwable, A]` |                                                | `IO[Nothing, A]` |
-| orDieWith       | `IO[E, A]`         | `E => Throwable`                               | `IO[Nothing, A]` |
-| refineOrDie     | `IO[Throwable, A]` | `PartialFunction[Throwable, E2]`               | `IO[E2, A]`      |
-| refineOrDieWith | `IO[E, A]`         | `PartialFunction[E, E2]` <br> `E => Throwable` | `IO[E2, A]`      |
+| 函数名             | 对象                 | 参数                                             | 输出               | 含义                                       |
+|-----------------|--------------------|------------------------------------------------|------------------|------------------------------------------|
+| orDie           | `IO[Throwable, A]` |                                                | `IO[Nothing, A]` | 将作用的错误视为 defect                          |
+| orDieWith       | `IO[E, A]`         | `E => Throwable`                               | `IO[Nothing, A]` | 将作用的错误转换为其他异常并视为 defect                  |
+| refineOrDie     | `IO[Throwable, A]` | `PartialFunction[Throwable, E2]`               | `IO[E2, A]`      | 将一部分错误值包装为新的错误，并将未处理的错误视为 defect         |
+| refineOrDieWith | `IO[E, A]`         | `PartialFunction[E, E2]` <br> `E => Throwable` | `IO[E2, A]`      | 将一部分错误值包装为新的错误，并将未处理的错误转换为其他异常后视为 defect |
 
-## Combining effects + parallelism
+## 组合作用 + 并行
 
-| Name               | From       | Given                                            | To                               |
-|--------------------|------------|--------------------------------------------------|----------------------------------|
-| ZIO.foldLeft       |            | `Iterable[A]` <br> `S` <br> `(S, A) => IO[E, S]` | `IO[E, S]`                       |
-| ZIO.foreach        |            | `Iterable[A]` <br> `A => IO[E, B]`               | `IO[E, List[B]]`                 |
-| ZIO.foreachPar     |            | `Iterable[A]` <br> `A => IO[E, B]`               | `IO[E, List[B]]`                 |
-| ZIO.collectAll     |            | `Iterable[IO[E, A]]`                             | `IO[E, List[A]]`                 |
-| ZIO.collectAllPar  |            | `Iterable[IO[E, A]]`                             | `IO[E, List[A]]`                 |
-| ZIO.forkAll        |            | `Iterable[IO[E, A]]`                             | `IO[Nothing, Fiber[E, List[A]]]` |
-| fork               | `IO[E, A]` |                                                  | `IO[Nothing, Runtime[E, A]]`     |
-| `<*>` (zip)        | `IO[E, A]` | `IO[E1, B]`                                      | `IO[E1, (A, B)]`                 |
-| `*>` (zipRight)    | `IO[E, A]` | `IO[E1, B]`                                      | `IO[E1, B]`                      |
-| `<*` (zipLeft)     | `IO[E, A]` | `IO[E1, B]`                                      | `IO[E1, A]`                      |
-| `<&>` (zipPar)     | `IO[E, A]` | `IO[E1, B]`                                      | `IO[E1, (A, B)]`                 |
-| `&>` (zipParRight) | `IO[E, A]` | `IO[E1, B]`                                      | `IO[E1, B]`                      |
-| `<&` (zipParLeft)  | `IO[E, A]` | `IO[E1, B]`                                      | `IO[E1, A]`                      |
-| race               | `IO[E, A]` | `IO[E1, A1]`                                     | `IO[E1, A1]`                     |
-| raceAll            | `IO[E, A]` | `Iterable[IO[E1, A1]]`                           | `IO[E1, A1]`                     |
-| raceEither         | `IO[E, A]` | `IO[E1, B]`                                      | `IO[E1, Either[A, B]]`           |
+| 函数名                | 对象         | 参数                                               | 输出                               | 含义                               |
+|--------------------|------------|--------------------------------------------------|----------------------------------|----------------------------------|
+| ZIO.foldLeft       |            | `Iterable[A]` <br> `S` <br> `(S, A) => IO[E, S]` | `IO[E, S]`                       | 按集合顺序以每两个作用的结果为参数计算，并最终得到一个作用    |
+| ZIO.foreach        |            | `Iterable[A]` <br> `A => IO[E, B]`               | `IO[E, List[B]]`                 | 按集合顺序依次以每个作用的结果为参数计算，并保留其结构      |
+| ZIO.foreachPar     |            | `Iterable[A]` <br> `A => IO[E, B]`               | `IO[E, List[B]]`                 | 并行地以集合中每个作用的结果为参数计算，保留结构但不保证顺序   |
+| ZIO.collectAll     |            | `Iterable[IO[E, A]]`                             | `IO[E, List[A]]`                 | 依次执行一组作用，并将结果放在原集合类型中返回          |
+| ZIO.collectAllPar  |            | `Iterable[IO[E, A]]`                             | `IO[E, List[A]]`                 | 并行执行一组作用，并将结果放在原集合类型中返回，不保证顺序    |
+| ZIO.forkAll        |            | `Iterable[IO[E, A]]`                             | `IO[Nothing, Fiber[E, List[A]]]` | 将集合中的每个作用都转换为协程，按原顺序返回转换后的协程对象   |
+| fork               | `IO[E, A]` |                                                  | `IO[Nothing, Runtime[E, A]]`     | 将单个作用转换为协程                       |
+| `<*>` (zip)        | `IO[E, A]` | `IO[E1, B]`                                      | `IO[E1, (A, B)]`                 | 将两个作用绑定顺序执行，并返回全部值               |
+| `*>` (zipRight)    | `IO[E, A]` | `IO[E1, B]`                                      | `IO[E1, B]`                      | 将两个作用绑定顺序执行，丢弃前一个值               |
+| `<*` (zipLeft)     | `IO[E, A]` | `IO[E1, B]`                                      | `IO[E1, A]`                      | 将两个作用绑定顺序执行，只保留前一个值              |
+| `<&>` (zipPar)     | `IO[E, A]` | `IO[E1, B]`                                      | `IO[E1, (A, B)]`                 | 同时执行两个作用                         |
+| `&>` (zipParRight) | `IO[E, A]` | `IO[E1, B]`                                      | `IO[E1, B]`                      | 同时执行两个作用，只保留第二个值                 |
+| `<&` (zipParLeft)  | `IO[E, A]` | `IO[E1, B]`                                      | `IO[E1, A]`                      | 同时执行两个作用，只保留第一个值                 |
+| race               | `IO[E, A]` | `IO[E1, A1]`                                     | `IO[E1, A1]`                     | 同时执行两个作用，只保留最先返回的值，并立刻打断另一个作用    |
+| raceAll            | `IO[E, A]` | `Iterable[IO[E1, A1]]`                           | `IO[E1, A1]`                     | 与另一组作用同时执行，只保留最先返回的值，并立刻打断其他所有作用 |
+| raceEither         | `IO[E, A]` | `IO[E1, B]`                                      | `IO[E1, Either[A, B]]`           | 同时执行两个作用，以 Either 的形式保留最先返回的值    |
 
-## Finalizers
+## 结束操作
 
-| Name          | From       | Given                      | To         |
-|---------------|------------|----------------------------|------------|
-| ensuring      | `IO[E, A]` | `UIO[_]`                   | `IO[E, A]` |
-| onError       | `IO[E, A]` | `Cause[E] => UIO[_]`       | `IO[E, A]` |
-| onInterrupt   | `IO[E, A]` | `UIO[_]`                   | `IO[E, A]` |
-| onTermination | `IO[E, A]` | `Cause[Nothing] => UIO[_]` | `IO[E, A]` |
+| 函数名           | 对象         | 输入                         | 输出         | 含义                                   |
+|---------------|------------|----------------------------|------------|--------------------------------------|
+| ensuring      | `IO[E, A]` | `UIO[_]`                   | `IO[E, A]` | 一旦原作用开始执行，传入的作用就一定会执行，无论原作用成功失败还是被打断 |
+| onError       | `IO[E, A]` | `Cause[E] => UIO[_]`       | `IO[E, A]` | 在原作用失败时，生成并执行新作用，新作用不会被打断            |
+| onInterrupt   | `IO[E, A]` | `UIO[_]`                   | `IO[E, A]` | 在原作用被打断时，执行新作用                       |
+| onTermination | `IO[E, A]` | `Cause[Nothing] => UIO[_]` | `IO[E, A]` | 当原作用因为 defect 或被打断而终结时，生成并执行新作用      |
 
-## Timing and repetition
+## 定时和重复
 
-| Name        | From       | Given            | To                     |
-|-------------|------------|------------------|------------------------|
-| ZIO.never   |            |                  | `IO[Nothing, Nothing]` |
-| ZIO.sleep   |            | `Duration`       | `IO[Nothing, Unit]`    |
-| delay       | `IO[E, A]` | `Duration`       | `IO[E, A]`             |
-| timeout     | `IO[E, A]` | `Duration`       | `IO[E, Option[A]]`     |
-| timed       | `IO[E, A]` |                  | `IO[E, (Duration, A)]` |
-| forever     | `IO[E, A]` |                  | `IO[E, Nothing]`       |
-| repeat      | `IO[E, A]` | `Schedule[A, B]` | `IO[E, B]`             |
-| repeatUntil | `IO[E, A]` | `A => Boolean`   | `IO[E, A]`             |
-| repeatWhile | `IO[E, A]` | `A => Boolean`   | `IO[E, A]`             |
+| 函数名         | 对象         | 输入               | 输出                     | 含义                  |
+|-------------|------------|------------------|------------------------|---------------------|
+| ZIO.never   |            |                  | `IO[Nothing, Nothing]` | 创建一个永远不会结束且什么也不做的作用 |
+| ZIO.sleep   |            | `Duration`       | `IO[Nothing, Unit]`    | 创建一个等待一段时间的作用       |
+| delay       | `IO[E, A]` | `Duration`       | `IO[E, A]`             | 使作用延迟一段时间后执行        |
+| timeout     | `IO[E, A]` | `Duration`       | `IO[E, Option[A]]`     | 给作用增加超时时间           |
+| timed       | `IO[E, A]` |                  | `IO[E, (Duration, A)]` | 一并返回该作用的值和执行时间      |
+| forever     | `IO[E, A]` |                  | `IO[E, Nothing]`       | 无限循环执行当前作用          |
+| repeat      | `IO[E, A]` | `Schedule[A, B]` | `IO[E, B]`             | 按照配置重复执行当前作用        |
+| repeatUntil | `IO[E, A]` | `A => Boolean`   | `IO[E, A]`             | 重复执行当前作用，直到作用结果满足断言 |
+| repeatWhile | `IO[E, A]` | `A => Boolean`   | `IO[E, A]`             | 当作用结果满足断言时，重复执行当前作用 |
 
-## Logging
+## 日志（字面含义）
 
-| Name           | From | Given    | To                  |
-|----------------|------|----------|---------------------|
-| ZIO.log        |      | `String` | `IO[Nothing, Unit]` |
-| ZIO.logFatal   |      | `String` | `IO[Nothing, Unit]` |
-| ZIO.logError   |      | `String` | `IO[Nothing, Unit]` |
-| ZIO.logWarning |      | `String` | `IO[Nothing, Unit]` |
-| ZIO.logInfo    |      | `String` | `IO[Nothing, Unit]` |
-| ZIO.logDebug   |      | `String` | `IO[Nothing, Unit]` |
-| ZIO.logTrace   |      | `String` | `IO[Nothing, Unit]` |
+| 函数名            | 输入       | 输出                  |
+|----------------|----------|---------------------|
+| ZIO.log        | `String` | `IO[Nothing, Unit]` |
+| ZIO.logFatal   | `String` | `IO[Nothing, Unit]` |
+| ZIO.logError   | `String` | `IO[Nothing, Unit]` |
+| ZIO.logWarning | `String` | `IO[Nothing, Unit]` |
+| ZIO.logInfo    | `String` | `IO[Nothing, Unit]` |
+| ZIO.logDebug   | `String` | `IO[Nothing, Unit]` |
+| ZIO.logTrace   | `String` | `IO[Nothing, Unit]` |
