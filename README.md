@@ -1,5 +1,7 @@
 # ZIO 速查表
 
+> 原文：[ZIO Cheat Sheet](https://github.com/ghostdogpr/zio-cheatsheet)
+
 - 该表基于 [ZIO](https://github.com/zio/zio) 2.0.X (编写时为 2.0.10).
 - 简单起见，所有环境参数都被省略了，但是所有的函数都可以使用 `ZIO[R, E, A]` 的形式来使用。
 - 简单起见，函数参数名称都被省略了。此外，函数的参数类型通常比下面显示的要 “更通用”。
