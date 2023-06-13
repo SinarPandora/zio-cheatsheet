@@ -81,11 +81,11 @@
 
 ## 声明并提供环境
 
-| 函数名                | 对象             | 参数                 | 输出                   | 含义          |
-|--------------------|----------------|--------------------|----------------------|-------------|
-| ZIO.service        |                | `given Tag[A]`     | `ZIO[A, Nothing, A]` | 访问当前环境      |
-| provideEnvironment | `ZIO[R, E, A]` | `ZEnvironment[R]`  | `IO[E, A]`           | 将环境传给作用     |
-| provideLayer       | `ZIO[R, E, A]` | `ZLayer[R0, E, R]` | `ZIO[R0, E, A]`      | 将带有环境的层传给作用 |
+| 函数名                | 对象             | 参数                 | 输出                   | 含义                 |
+|--------------------|----------------|--------------------|----------------------|--------------------|
+| ZIO.service        |                | `given Tag[A]`     | `ZIO[A, Nothing, A]` | 获取一个指定类型的环境并作为作用的值 |
+| provideEnvironment | `ZIO[R, E, A]` | `ZEnvironment[R]`  | `IO[E, A]`           | 将环境传给作用            |
+| provideLayer       | `ZIO[R, E, A]` | `ZLayer[R0, E, R]` | `ZIO[R0, E, A]`      | 将带有环境的层传给作用        |
 
 ## 配置
 
