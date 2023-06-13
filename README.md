@@ -81,19 +81,19 @@
 
 ## 声明并提供环境
 
-| 函数名                | 输入             | 参数                 | 输出                   | 含义 |
-|--------------------|----------------|--------------------|----------------------|----|
-| ZIO.service        |                | `given Tag[A]`     | `ZIO[A, Nothing, A]` |    |
-| provideEnvironment | `ZIO[R, E, A]` | `ZEnvironment[R]`  | `IO[E, A]`           |    |
-| provideLayer       | `ZIO[R, E, A]` | `ZLayer[R0, E, R]` | `ZIO[R0, E, A]`      |    |
+| 函数名                | 对象             | 参数                 | 输出                   | 含义                 |
+|--------------------|----------------|--------------------|----------------------|--------------------|
+| ZIO.service        |                | `given Tag[A]`     | `ZIO[A, Nothing, A]` | 获取一个指定类型的环境并作为作用的值 |
+| provideEnvironment | `ZIO[R, E, A]` | `ZEnvironment[R]`  | `IO[E, A]`           | 将环境传给作用            |
+| provideLayer       | `ZIO[R, E, A]` | `ZLayer[R0, E, R]` | `ZIO[R0, E, A]`      | 将带有环境的层传给作用        |
 
-## Configuration
+## 配置
 
-| Name       | From | Given       | To                    |
-|------------|------|-------------|-----------------------|
-| ZIO.config |      | `Config[A]` | `IO[Config.Error, A]` |
+| 函数名        | 对象 | 参数          | 输出                    | 含义             |
+|------------|----|-------------|-----------------------|----------------|
+| ZIO.config |    | `Config[A]` | `IO[Config.Error, A]` | 从指定的配置提供者中读取配置 |
 
-## Recover from errors
+## 从错误中恢复
 
 | Name          | From       | Given                                         | To                          |
 |---------------|------------|-----------------------------------------------|-----------------------------|
